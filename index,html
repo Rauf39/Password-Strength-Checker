@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Password Strength Checker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>Password Strength Checker</h2>
+        
+        <div class="input-group">
+            <input type="password" id="password" placeholder="Enter password">
+            <button id="toggle">👁</button>
+        </div>
+
+        <div class="buttons">
+            <button id="check">Check</button>
+            <button id="generate">Generate</button>
+            <button id="copy">Copy</button>
+        </div>
+
+        <div class="progress">
+            <div id="progress-bar">0%</div>
+        </div>
+
+        <ul id="recommendations"></ul>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
