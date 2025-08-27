@@ -5,13 +5,13 @@
     <title>Password Strength Checker</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
+<body class="light">
     <div class="container">
         <h2>Password Strength Checker</h2>
         
         <div class="input-group">
             <input type="password" id="password" placeholder="Enter password">
-            <button id="toggle">👁</button>
+            <button id="toggle" title="Show/Hide">👁</button>
         </div>
 
         <div class="buttons">
@@ -24,7 +24,16 @@
             <div id="progress-bar">0%</div>
         </div>
 
+        <p id="crack-time"></p>
+        <p id="breach-info"></p>
+
+        <h3>Recommendations</h3>
         <ul id="recommendations"></ul>
+
+        <h3>Last 5 Passwords</h3>
+        <ul id="history"></ul>
+
+        <button id="theme-toggle">🌙 Toggle Theme</button>
     </div>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
