@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ t['title'] }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="container">
+  <h1>{{ t['title'] }}</h1>
+
+  <!-- Language switch -->
+  <div class="lang-switch">
+    <button class="lang-btn" onclick="setLang('en')">🇬🇧 EN</button>
+    <button class="lang-btn" onclick="setLang('ru')">🇷🇺 RU</button>
+    <button class="lang-btn" onclick="setLang('az')">🇦🇿 AZ</button>
+  </div>
+
+  <!-- Input -->
+  <div class="input-group">
+    <input type="password" id="password" placeholder="{{ t['enter_password'] }}">
+    <button id="toggle">{{ t['toggle'] }}</button>
+    <button id="copy">{{ t['copy'] }}</button>
+  </div>
+
+  <!-- Buttons -->
+  <div class="btn-row">
+    <button id="check">{{ t['check'] }}</button>
+    <button id="generate">{{ t['generate'] }}</button>
+    <button id="last5">{{ t['last5'] }}</button>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress">
+    <div id="progress-bar">0%</div>
+  </div>
+
+  <!-- Info -->
+  <p id="message"></p>
+  <p id="time"></p>
+  <p id="entropy"></p>
+  <p id="breach"></p>
+
+  <!-- Recommendations -->
+  <h3>{{ t['recommendations'] }}</h3>
+  <ul id="recs"></ul>
+
+  <!-- History -->
+  <div id="history-box" class="hidden">
+    <h3>{{ t['history'] }}</h3>
+    <ul id="history"></ul>
+    <button id="clear">{{ t['clear'] }}</button>
+  </div>
+
+  <!-- Batch upload -->
+  <h3>{{ t['batch'] }}</h3>
+  <input type="file" id="batch-file">
+  <div class="btn-row">
+    <button id="batch-btn">{{ t['batch'] }}</button>
+    <button id="batch-clear">Clear Batch</button>
+  </div>
+  <ul id="batch-results"></ul>
+</div>
+
+<!-- Theme toggle -->
+<div class="theme-toggle">
+  <span id="theme-btn">🌙</span>
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
