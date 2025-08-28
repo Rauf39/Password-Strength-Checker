@@ -1,108 +1,149 @@
+:root {
+  --bg: #f0f4ff;
+  --text: #222;
+  --container: #fff;
+  --primary: #3b82f6;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #4e73df, #1cc88a);
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 0;
-    transition: background 0.5s;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.6s, color 0.6s;
 }
 
 body.dark {
-    background: linear-gradient(135deg, #2c3e50, #34495e);
-    color: #fff;
+  --bg: #121212;
+  --text: #eee;
+  --container: #1f1f1f;
+  --primary: #2563eb;
 }
 
 .container {
-    background: #fff;
-    padding: 25px;
-    border-radius: 15px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    width: 400px;
-    text-align: center;
-    transition: background 0.5s, color 0.5s;
-}
-
-body.dark .container {
-    background: #2c3e50;
-    color: #fff;
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 20px;
+  background: var(--container);
+  border-radius: 16px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+  text-align: center;
+  transition: background 0.6s, color 0.6s;
 }
 
 .input-group {
-    display: flex;
-    align-items: center;
-    margin-bottom: 15px;
+  display: flex;
+  gap: 5px;
+  margin-bottom: 15px;
 }
 
 .input-group input {
-    width: 100%;
-    padding: 10px;
-    border: 2px solid #ddd;
-    border-radius: 8px 0 0 8px;
-    outline: none;
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
 }
 
-.input-group button {
-    border: 2px solid #ddd;
-    border-left: none;
-    padding: 10px;
-    background: #eee;
-    cursor: pointer;
-    border-radius: 0 8px 8px 0;
+button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.4s;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
 }
 
-.buttons {
-    display: flex;
-    justify-content: space-between;
-    margin: 15px 0;
+button:hover {
+  transform: scale(1.07);
 }
 
-.buttons button {
-    flex: 1;
-    margin: 0 5px;
-    padding: 10px;
-    border: none;
-    background: #4e73df;
-    color: white;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.buttons button:hover {
-    background: #2e59d9;
+.btn-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 15px 0;
 }
 
 .progress {
-    background: #eee;
-    border-radius: 8px;
-    overflow: hidden;
-    height: 25px;
-    margin-bottom: 15px;
+  background: #ddd;
+  border-radius: 12px;
+  margin: 15px 0;
+  height: 25px;
+  overflow: hidden;
 }
 
 #progress-bar {
-    height: 100%;
-    width: 0;
-    background: red;
-    color: white;
-    text-align: center;
-    line-height: 25px;
-    transition: width 0.4s, background 0.4s;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(to right, red, orange, green);
+  text-align: center;
+  color: white;
+  line-height: 25px;
+  transition: width 0.7s ease-in-out;
 }
 
-ul {
-    text-align: left;
-    color: inherit;
+.hidden {
+  display: none;
 }
 
-#theme-toggle {
-    margin-top: 15px;
-    background: #1cc88a;
-    color: white;
-    padding: 10px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
+.lang-switch {
+  margin-bottom: 10px;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropbtn {
+  background: var(--primary);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 10px;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: var(--container);
+  min-width: 140px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+  border-radius: 10px;
+  z-index: 1;
+  animation: fadeIn 0.4s;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.dropdown-content a {
+  color: var(--text);
+  padding: 8px 12px;
+  display: block;
+  text-decoration: none;
+}
+
+.dropdown-content a:hover {
+  background-color: #eee;
+}
+
+.theme-toggle {
+  text-align: center;
+  margin-top: 20px;
+}
+
+#theme-btn {
+  cursor: pointer;
+  font-size: 30px;
+  transition: transform 0.6s;
+}
+#theme-btn:hover {
+  transform: rotate(180deg);
+}
+
+@keyframes fadeIn {
+  from {opacity:0;}
+  to {opacity:1;}
 }
