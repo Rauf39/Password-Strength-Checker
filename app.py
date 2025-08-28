@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session
 import requests
 import hashlib
 import random
 import string
+import math
 
 app = Flask(__name__)
 app.secret_key = "super_secret_key"
@@ -22,7 +23,8 @@ translations = {
         "history": "Password History",
         "compromised": "⚠️ This password was found in a data breach!",
         "not_compromised": "✅ This password has not been found in breaches.",
-        "time": "⏳ Time to crack: "
+        "entropy": "Entropy bits: ",
+        "batch": "Batch Check"
     },
     "ru": {
         "title": "Проверка надежности пароля",
@@ -37,7 +39,8 @@ translations = {
         "history": "История паролей",
         "compromised": "⚠️ Этот пароль найден в утечках!",
         "not_compromised": "✅ Этот пароль не найден в утечках.",
-        "time": "⏳ Время взлома: "
+        "entropy": "Энтропия (бит): ",
+        "batch": "Массовая проверка"
     },
     "az": {
         "title": "Şifrə Güclülük Yoxlayıcı",
@@ -52,11 +55,11 @@ translations = {
         "history": "Şifrə Tarixi",
         "compromised": "⚠️ Bu şifrə sızıntılarda tapılıb!",
         "not_compromised": "✅ Bu şifrə sızıntılarda tapılmayıb.",
-        "time": "⏳ Sındırılma vaxtı: "
+        "entropy": "Entropiya bitləri: ",
+        "batch": "Kütləvi yoxlama"
     }
 }
 
-# Функции
 def password_strength(password: str) -> dict:
     score = 0
     recs = []
@@ -76,16 +79,38 @@ def password_strength(password: str) -> dict:
     if any(c in string.punctuation for c in password): score += 20
     else: recs.append("Add special characters.")
 
-    return {"score": min(score, 100), "recommendations": recs}
+    # Gamification
+    message = "⚠ Weak! Too risky!"
+    if score >= 60:
+        message = "💡 Medium, can be improved."
+    if score >= 80:
+        message = "🔥 Excellent! Hacker-proof!"
 
-def time_to_crack(password: str) -> str:
+    return {"score": min(score, 100), "recommendations": recs, "message": message}
+
+def time_to_crack(password: str) -> dict:
     length = len(password)
-    if length < 6: return "instantly"
-    elif length < 8: return "minutes"
-    elif length < 10: return "hours"
-    elif length < 12: return "days"
-    elif length < 16: return "years"
-    else: return "centuries"
+    if length < 6:
+        return {"pc": "instantly", "gpu": "instantly", "super": "instantly"}
+    elif length < 8:
+        return {"pc": "minutes", "gpu": "seconds", "super": "milliseconds"}
+    elif length < 10:
+        return {"pc": "hours", "gpu": "minutes", "super": "seconds"}
+    elif length < 12:
+        return {"pc": "days", "gpu": "hours", "super": "minutes"}
+    elif length < 16:
+        return {"pc": "years", "gpu": "months", "super": "days"}
+    else:
+        return {"pc": "centuries", "gpu": "years", "super": "months"}
+
+def entropy(password: str) -> int:
+    charset = 0
+    if any(c.islower() for c in password): charset += 26
+    if any(c.isupper() for c in password): charset += 26
+    if any(c.isdigit() for c in password): charset += 10
+    if any(c in string.punctuation for c in password): charset += len(string.punctuation)
+    if charset == 0: return 0
+    return round(len(password) * math.log2(charset))
 
 def check_pwned(password: str) -> bool:
     sha1 = hashlib.sha1(password.encode("utf-8")).hexdigest().upper()
@@ -94,33 +119,33 @@ def check_pwned(password: str) -> bool:
     res = requests.get(url)
     if res.status_code == 200:
         for line in res.text.splitlines():
-            h, count = line.split(":")
+            h, _ = line.split(":")
             if h == suffix:
                 return True
     return False
 
-# Роуты
 @app.route("/")
 def index():
-    lang = session.get("lang", "en")
+    lang = request.args.get("lang") or session.get("lang", "en")
+    if lang not in translations:
+        lang = "en"
+    session["lang"] = lang
     return render_template("index.html", t=translations[lang], lang=lang)
-
-@app.route("/setlang/<lang>")
-def setlang(lang):
-    if lang in translations:
-        session["lang"] = lang
-    return redirect(url_for("index"))
 
 @app.route("/check", methods=["POST"])
 def check():
     pw = request.json.get("password", "")
+    save = request.json.get("save", False)  # флаг: сохранять ли в историю
     result = password_strength(pw)
     cracked = time_to_crack(pw)
-    compromised = check_pwned(pw)
+    comp = check_pwned(pw)
+    ent = entropy(pw)
 
     if "history" not in session:
         session["history"] = []
-    if pw and pw not in session["history"]:
+
+    # Сохраняем только если нажата кнопка Check
+    if save and pw and pw not in session["history"]:
         session["history"].insert(0, pw)
         session["history"] = session["history"][:5]
 
@@ -128,15 +153,17 @@ def check():
     return jsonify({
         "score": result["score"],
         "recommendations": result["recommendations"],
+        "message": result["message"],
         "time": cracked,
-        "compromised": compromised,
+        "compromised": comp,
+        "entropy": ent,
         "history": session["history"]
     })
 
 @app.route("/generate")
 def generate():
-    chars = string.ascii_lowercase + string.ascii_uppercase + string.digits + string.punctuation
-    pw = "".join(random.choice(chars) for _ in range(16))
+    chars = string.ascii_letters + string.digits + string.punctuation
+    pw = "".join(random.choice(chars) for _ in range(18))
     return jsonify({"password": pw})
 
 @app.route("/clear", methods=["POST"])
@@ -144,5 +171,21 @@ def clear():
     session["history"] = []
     return jsonify({"status": "cleared"})
 
+@app.route("/batch", methods=["POST"])
+def batch():
+    file = request.files["file"]
+    content = file.read().decode("utf-8").splitlines()
+    results = []
+    for pw in content:
+        res = password_strength(pw)
+        results.append({
+            "password": pw,
+            "score": res["score"],
+            "message": res["message"],
+            "compromised": check_pwned(pw),
+            "entropy": entropy(pw)
+        })
+    return jsonify(results)
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="192.168.0.107", port=5002, debug=True)
