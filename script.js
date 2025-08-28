@@ -1,88 +1,91 @@
-document.getElementById("check").addEventListener("click", async () => {
-    const password = document.getElementById("password").value;
+document.addEventListener("DOMContentLoaded", () => {
+  const pwInput = document.getElementById("password");
+  const checkBtn = document.getElementById("check");
+  const genBtn = document.getElementById("generate");
+  const last5Btn = document.getElementById("last5");
+  const clearBtn = document.getElementById("clear");
+  const toggleBtn = document.getElementById("toggle");
+  const copyBtn = document.getElementById("copy");
+  const themeBtn = document.getElementById("theme-btn");
 
-    if (!password) {
-        alert("Please enter a password!");
-        return;
-    }
+  const progressBar = document.getElementById("progress-bar");
+  const recsList = document.getElementById("recs");
+  const timeTxt = document.getElementById("time");
+  const breachTxt = document.getElementById("breach");
+  const historyBox = document.getElementById("history-box");
+  const historyList = document.getElementById("history");
 
+  // toggle
+  toggleBtn.addEventListener("click", () => {
+    pwInput.type = pwInput.type === "password" ? "text" : "password";
+  });
+
+  // copy
+  copyBtn.addEventListener("click", () => {
+    if (!pwInput.value) return;
+    navigator.clipboard.writeText(pwInput.value);
+    copyBtn.innerText = "✔";
+    setTimeout(() => (copyBtn.innerText = "Copy"), 1200);
+  });
+
+  // check
+  checkBtn.addEventListener("click", async () => {
+    if (!pwInput.value) return;
     const res = await fetch("/check", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({password})
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: pwInput.value }),
     });
-
     const data = await res.json();
 
-    const bar = document.getElementById("progress-bar");
-    bar.style.width = data.score + "%";
-    bar.textContent = data.score + "%";
+    progressBar.style.width = data.score + "%";
+    progressBar.innerText = data.score + "%";
 
-    if (data.score < 40) {
-        bar.style.background = "red";
-    } else if (data.score < 70) {
-        bar.style.background = "orange";
-    } else {
-        bar.style.background = "linear-gradient(90deg, orange, green)";
-    }
-
-    document.getElementById("crack-time").textContent = "⏳ Estimated crack time: " + data.crack_time;
-
-    if (data.breached) {
-        document.getElementById("breach-info").textContent = `⚠️ Found in breaches (${data.count} times)`;
-        document.getElementById("breach-info").style.color = "red";
-    } else {
-        document.getElementById("breach-info").textContent = "✅ Not found in breaches";
-        document.getElementById("breach-info").style.color = "green";
-    }
-
-    const recs = document.getElementById("recommendations");
-    recs.innerHTML = "";
+    recsList.innerHTML = "";
     data.recommendations.forEach(r => {
-        let li = document.createElement("li");
-        li.textContent = "💡 " + r;
-        recs.appendChild(li);
+      let li = document.createElement("li");
+      li.innerText = r;
+      li.style.animation = "fadeIn 0.5s";
+      recsList.appendChild(li);
     });
 
-    const hist = document.getElementById("history");
-    hist.innerHTML = "";
-    data.history.forEach(h => {
-        let li = document.createElement("li");
-        li.textContent = h;
-        hist.appendChild(li);
-    });
-});
+    timeTxt.innerText = document.body.classList.contains("dark")
+      ? "🌙 " + data.time
+      : "⏳ " + data.time;
+    breachTxt.innerText = data.compromised ? "⚠️ Pwned!" : "✅ Safe";
 
-document.getElementById("generate").addEventListener("click", async () => {
+    historyList.innerHTML = "";
+    data.history.forEach(p => {
+      let li = document.createElement("li");
+      li.innerText = p;
+      historyList.appendChild(li);
+    });
+  });
+
+  // generate always strong
+  genBtn.addEventListener("click", async () => {
     const res = await fetch("/generate");
     const data = await res.json();
-    document.getElementById("password").value = data.password;
-});
+    pwInput.value = data.password;
 
-document.getElementById("copy").addEventListener("click", () => {
-    const pwd = document.getElementById("password");
-    pwd.select();
-    document.execCommand("copy");
+    // auto-check after generation
+    checkBtn.click();
+  });
 
-    let msg = document.createElement("div");
-    msg.textContent = "Copied!";
-    msg.style.position = "fixed";
-    msg.style.bottom = "20px";
-    msg.style.right = "20px";
-    msg.style.background = "green";
-    msg.style.color = "white";
-    msg.style.padding = "10px";
-    msg.style.borderRadius = "8px";
-    document.body.appendChild(msg);
+  // last5 toggle
+  last5Btn.addEventListener("click", () => {
+    historyBox.classList.toggle("hidden");
+  });
 
-    setTimeout(() => msg.remove(), 1000);
-});
+  // clear
+  clearBtn.addEventListener("click", async () => {
+    await fetch("/clear", { method: "POST" });
+    historyList.innerHTML = "";
+  });
 
-document.getElementById("toggle").addEventListener("click", () => {
-    const pwd = document.getElementById("password");
-    pwd.type = pwd.type === "password" ? "text" : "password";
-});
-
-document.getElementById("theme-toggle").addEventListener("click", () => {
+  // theme
+  themeBtn.addEventListener("click", () => {
     document.body.classList.toggle("dark");
+    themeBtn.innerText = document.body.classList.contains("dark") ? "☀️" : "🌙";
+  });
 });
