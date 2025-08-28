@@ -1,126 +1,148 @@
-from flask import Flask, render_template, request, jsonify, session
-import re
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+import requests
+import hashlib
 import random
 import string
-import requests
 
 app = Flask(__name__)
-app.secret_key = "supersecret"  # для хранения истории в сессии
+app.secret_key = "super_secret_key"
 
-# --- Проверка пароля ---
-def check_password_strength(password):
+# Переводы
+translations = {
+    "en": {
+        "title": "Password Strength Checker",
+        "enter_password": "Enter your password:",
+        "check": "Check",
+        "generate": "Generate",
+        "last5": "Last 5",
+        "clear": "Clear",
+        "copy": "Copy",
+        "toggle": "Show/Hide",
+        "recommendations": "Recommendations",
+        "history": "Password History",
+        "compromised": "⚠️ This password was found in a data breach!",
+        "not_compromised": "✅ This password has not been found in breaches.",
+        "time": "⏳ Time to crack: "
+    },
+    "ru": {
+        "title": "Проверка надежности пароля",
+        "enter_password": "Введите пароль:",
+        "check": "Проверить",
+        "generate": "Сгенерировать",
+        "last5": "Последние 5",
+        "clear": "Очистить",
+        "copy": "Скопировать",
+        "toggle": "Показать/Скрыть",
+        "recommendations": "Рекомендации",
+        "history": "История паролей",
+        "compromised": "⚠️ Этот пароль найден в утечках!",
+        "not_compromised": "✅ Этот пароль не найден в утечках.",
+        "time": "⏳ Время взлома: "
+    },
+    "az": {
+        "title": "Şifrə Güclülük Yoxlayıcı",
+        "enter_password": "Şifrənizi daxil edin:",
+        "check": "Yoxla",
+        "generate": "Yarat",
+        "last5": "Son 5",
+        "clear": "Təmizlə",
+        "copy": "Kopyala",
+        "toggle": "Göstər/Gizlə",
+        "recommendations": "Tövsiyələr",
+        "history": "Şifrə Tarixi",
+        "compromised": "⚠️ Bu şifrə sızıntılarda tapılıb!",
+        "not_compromised": "✅ Bu şifrə sızıntılarda tapılmayıb.",
+        "time": "⏳ Sındırılma vaxtı: "
+    }
+}
+
+# Функции
+def password_strength(password: str) -> dict:
     score = 0
-    recommendations = []
+    recs = []
 
-    # Длина
-    if len(password) >= 12:
-        score += 25
-    else:
-        recommendations.append("Use at least 12 characters")
+    if len(password) >= 8: score += 20
+    else: recs.append("Use at least 8 characters.")
 
-    # Цифры
-    if re.search(r"\d", password):
-        score += 15
-    else:
-        recommendations.append("Add numbers")
+    if any(c.islower() for c in password): score += 20
+    else: recs.append("Add lowercase letters.")
 
-    # Заглавные
-    if re.search(r"[A-Z]", password):
-        score += 15
-    else:
-        recommendations.append("Add uppercase letters")
+    if any(c.isupper() for c in password): score += 20
+    else: recs.append("Add uppercase letters.")
 
-    # Спецсимволы
-    if re.search(r"[@$!%*?&]", password):
-        score += 20
-    else:
-        recommendations.append("Add special characters (@, $, !, %, etc.)")
+    if any(c.isdigit() for c in password): score += 20
+    else: recs.append("Add numbers.")
 
-    # Строчные
-    if re.search(r"[a-z]", password):
-        score += 25
-    else:
-        recommendations.append("Add lowercase letters")
+    if any(c in string.punctuation for c in password): score += 20
+    else: recs.append("Add special characters.")
 
-    score = min(score, 100)
+    return {"score": min(score, 100), "recommendations": recs}
 
-    # Примерная оценка времени взлома
-    crack_time = estimate_crack_time(len(password), score)
+def time_to_crack(password: str) -> str:
+    length = len(password)
+    if length < 6: return "instantly"
+    elif length < 8: return "minutes"
+    elif length < 10: return "hours"
+    elif length < 12: return "days"
+    elif length < 16: return "years"
+    else: return "centuries"
 
-    return score, recommendations, crack_time
-
-
-def estimate_crack_time(length, score):
-    if length < 6:
-        return "Instantly"
-    elif score < 40:
-        return "Few seconds"
-    elif score < 70:
-        return "Minutes to hours"
-    elif score < 90:
-        return "Days to months"
-    else:
-        return "Centuries"
-
-
-# --- Генератор пароля ---
-def generate_password(length=16):
-    chars = string.ascii_letters + string.digits + "@$!%*?&"
-    return ''.join(random.choice(chars) for _ in range(length))
-
-
-# --- Проверка утечек ---
-def check_pwned(password):
-    sha1 = __import__('hashlib').sha1(password.encode('utf-8')).hexdigest().upper()
+def check_pwned(password: str) -> bool:
+    sha1 = hashlib.sha1(password.encode("utf-8")).hexdigest().upper()
     prefix, suffix = sha1[:5], sha1[5:]
     url = f"https://api.pwnedpasswords.com/range/{prefix}"
     res = requests.get(url)
-    if res.status_code != 200:
-        return False, 0
-    hashes = (line.split(':') for line in res.text.splitlines())
-    for h, count in hashes:
-        if h == suffix:
-            return True, int(count)
-    return False, 0
+    if res.status_code == 200:
+        for line in res.text.splitlines():
+            h, count = line.split(":")
+            if h == suffix:
+                return True
+    return False
 
-
-@app.route('/')
+# Роуты
+@app.route("/")
 def index():
+    lang = session.get("lang", "en")
+    return render_template("index.html", t=translations[lang], lang=lang)
+
+@app.route("/setlang/<lang>")
+def setlang(lang):
+    if lang in translations:
+        session["lang"] = lang
+    return redirect(url_for("index"))
+
+@app.route("/check", methods=["POST"])
+def check():
+    pw = request.json.get("password", "")
+    result = password_strength(pw)
+    cracked = time_to_crack(pw)
+    compromised = check_pwned(pw)
+
     if "history" not in session:
         session["history"] = []
-    return render_template("index.html")
+    if pw and pw not in session["history"]:
+        session["history"].insert(0, pw)
+        session["history"] = session["history"][:5]
 
-
-@app.route('/check', methods=['POST'])
-def check():
-    data = request.get_json()
-    password = data.get("password", "")
-
-    score, recs, crack_time = check_password_strength(password)
-    breached, count = check_pwned(password)
-
-    # история (уникальные, последние 5)
-    history = session.get("history", [])
-    if password and password not in history:
-        history.insert(0, password)
-        history = history[:5]
-    session["history"] = history
-
+    session.modified = True
     return jsonify({
-        "score": score,
-        "recommendations": recs,
-        "crack_time": crack_time,
-        "breached": breached,
-        "count": count,
-        "history": history
+        "score": result["score"],
+        "recommendations": result["recommendations"],
+        "time": cracked,
+        "compromised": compromised,
+        "history": session["history"]
     })
 
-
-@app.route('/generate', methods=['GET'])
+@app.route("/generate")
 def generate():
-    pwd = generate_password()
-    return jsonify({"password": pwd})
+    chars = string.ascii_lowercase + string.ascii_uppercase + string.digits + string.punctuation
+    pw = "".join(random.choice(chars) for _ in range(16))
+    return jsonify({"password": pw})
 
+@app.route("/clear", methods=["POST"])
+def clear():
+    session["history"] = []
+    return jsonify({"status": "cleared"})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(debug=True)
