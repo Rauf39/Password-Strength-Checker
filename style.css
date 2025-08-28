@@ -3,13 +3,17 @@
   --text: #222;
   --container: #fff;
   --primary: #3b82f6;
+  --success: #22c55e;
+  --danger: #ef4444;
 }
 
 body {
-  font-family: Arial, sans-serif;
+  font-family: "Segoe UI", Arial, sans-serif;
   background: var(--bg);
   color: var(--text);
-  transition: background 0.6s, color 0.6s;
+  margin: 0;
+  padding: 0;
+  transition: background 0.5s, color 0.5s;
 }
 
 body.dark {
@@ -19,20 +23,37 @@ body.dark {
   --primary: #2563eb;
 }
 
+body.matrix {
+  --bg: #000;
+  --text: #0f0;
+  --container: #111;
+  --primary: #0f0;
+}
+
+body.blue {
+  --bg: linear-gradient(135deg, #3b82f6, #06b6d4);
+  --text: #fff;
+  --container: rgba(255, 255, 255, 0.15);
+  --primary: #1e3a8a;
+}
+
 .container {
   max-width: 600px;
   margin: 50px auto;
-  padding: 20px;
+  padding: 25px;
   background: var(--container);
   border-radius: 16px;
   box-shadow: 0 6px 16px rgba(0,0,0,0.25);
   text-align: center;
-  transition: background 0.6s, color 0.6s;
+}
+
+h1 {
+  margin-bottom: 20px;
 }
 
 .input-group {
   display: flex;
-  gap: 5px;
+  gap: 8px;
   margin-bottom: 15px;
 }
 
@@ -41,6 +62,7 @@ body.dark {
   padding: 10px;
   border-radius: 8px;
   border: 1px solid #ccc;
+  font-size: 15px;
 }
 
 button {
@@ -49,13 +71,15 @@ button {
   border-radius: 10px;
   background: var(--primary);
   color: white;
+  font-weight: bold;
   cursor: pointer;
-  transition: transform 0.2s, background 0.4s;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  transition: transform 0.2s, background 0.3s;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
 }
 
 button:hover {
   transform: scale(1.07);
+  opacity: 0.9;
 }
 
 .btn-row {
@@ -88,45 +112,24 @@ button:hover {
 }
 
 .lang-switch {
-  margin-bottom: 10px;
+  margin: 15px 0;
 }
 
-.dropdown {
-  position: relative;
-  display: inline-block;
+.lang-btn {
+  background: transparent;
+  border: 2px solid var(--primary);
+  color: var(--primary);
+  border-radius: 6px;
+  padding: 5px 12px;
+  margin: 0 5px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
 }
 
-.dropbtn {
+.lang-btn:hover {
   background: var(--primary);
   color: white;
-  padding: 8px 14px;
-  border-radius: 10px;
-}
-
-.dropdown-content {
-  display: none;
-  position: absolute;
-  background-color: var(--container);
-  min-width: 140px;
-  box-shadow: 0 6px 12px rgba(0,0,0,0.2);
-  border-radius: 10px;
-  z-index: 1;
-  animation: fadeIn 0.4s;
-}
-
-.dropdown:hover .dropdown-content {
-  display: block;
-}
-
-.dropdown-content a {
-  color: var(--text);
-  padding: 8px 12px;
-  display: block;
-  text-decoration: none;
-}
-
-.dropdown-content a:hover {
-  background-color: #eee;
 }
 
 .theme-toggle {
@@ -143,7 +146,12 @@ button:hover {
   transform: rotate(180deg);
 }
 
-@keyframes fadeIn {
-  from {opacity:0;}
-  to {opacity:1;}
+/* Batch results */
+#batch-results li {
+  margin: 6px 0;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.05);
+  list-style: none;
+  font-size: 14px;
 }
