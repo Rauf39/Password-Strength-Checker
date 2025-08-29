@@ -188,4 +188,4 @@ def batch():
     return jsonify(results)
 
 if __name__ == "__main__":
-    app.run(host="192.168.0.107", port=5002, debug=True)
+    app.run(host="192.168.0.107", port=5003, debug=True)
